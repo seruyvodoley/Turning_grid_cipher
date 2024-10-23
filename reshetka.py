@@ -8,6 +8,7 @@ class AlphabetManager:
     """
     Класс для управления алфавитом и выбора подходящего набора символов (латиница или кириллица).
     """
+
     def __init__(self):
         """Инициализация класса. Создание атрибута для хранения алфавита."""
         self.alphabet = None
@@ -54,7 +55,7 @@ class AlphabetManager:
             else:
                 self.alphabet = list('АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюя')
         else:
-            self.alphabet = list(string.ascii_letters + string.digits + string.punctuation)
+            self.alphabet = list(string.punctuation)
 
     def get_alphabet(self):
         """Возвращает текущий алфавит."""
@@ -65,6 +66,7 @@ class AlphabetSelectionDialog(tk.Toplevel):
     """
     Диалоговое окно для выбора алфавита (латиница или кириллица).
     """
+
     def __init__(self, parent):
         """Инициализация диалога. Создание кнопок выбора алфавита."""
         super().__init__(parent)
@@ -102,6 +104,7 @@ class GridCipherApp:
     """
     Приложение для реализации шифра на основе поворачивающейся решетки.
     """
+
     def __init__(self, master):
         """Инициализация основного окна и создание элементов интерфейса."""
         self.encrypted_canvases = None
@@ -141,13 +144,15 @@ class GridCipherApp:
         encrypted_grid_frame = tk.Frame(self.master)
         encrypted_grid_frame.pack(side=tk.LEFT, padx=18, pady=18)
 
+        # Добавляем скроллинг
         self.encrypted_scroll = tk.Scrollbar(encrypted_grid_frame, orient=tk.VERTICAL)
-        self.encrypted_canvas_frame = tk.Canvas(encrypted_grid_frame, width=self.grid_cols * self.cell_size+20,
-                                                height=self.grid_rows * self.cell_size+20,
+        self.encrypted_canvas_frame = tk.Canvas(encrypted_grid_frame, width=self.grid_cols * self.cell_size + 20,
+                                                height=self.grid_rows * self.cell_size + 20,
                                                 yscrollcommand=self.encrypted_scroll.set)
 
-        self.encrypted_canvas_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.encrypted_scroll.config(command=self.encrypted_canvas_frame.yview)
         self.encrypted_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        self.encrypted_canvas_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         self.encrypted_canvases_frame = tk.Frame(self.encrypted_canvas_frame)
         self.encrypted_canvas_frame.create_window((0, 0), window=self.encrypted_canvases_frame, anchor='nw')
@@ -185,6 +190,21 @@ class GridCipherApp:
         output_text_scroll.pack(side=tk.RIGHT, fill=tk.Y)
         self.output_text.pack(side=tk.LEFT, fill=tk.BOTH)
 
+        # Кнопка расшифровки
+        tk.Button(controls_frame, text="Decrypt text", command=self.decrypt_text).pack(anchor=tk.W, pady=5)
+
+        # Поле для расшифрованного текста с прокруткой
+        tk.Label(controls_frame, text="Decrypted text:").pack(anchor=tk.W, pady=10)
+        decrypted_text_frame = tk.Frame(controls_frame)
+        decrypted_text_frame.pack()
+
+        decrypted_text_scroll = tk.Scrollbar(decrypted_text_frame, orient=tk.VERTICAL)
+        self.decrypted_text = tk.Text(decrypted_text_frame, height=5, width=30,
+                                      yscrollcommand=decrypted_text_scroll.set)
+        decrypted_text_scroll.config(command=self.decrypted_text.yview)
+        decrypted_text_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        self.decrypted_text.pack(side=tk.LEFT, fill=tk.BOTH)
+
         self.create_grid()
 
     def set_grid_size(self):
@@ -192,39 +212,39 @@ class GridCipherApp:
         Устанавливает размер сетки на основе ввода пользователя. Проверяет ввод на корректность.
         """
         while True:
-            rows = simpledialog.askinteger("Input", "Enter number of rows (1-20):", parent=self.master)
-            if rows is None:  # Пользователь закрыл окно
+            rows = simpledialog.askinteger("Input", "Enter number of rows (3-20):", parent=self.master)
+            if rows is None:
                 return
-            if rows <= 0 or rows > 20:
-                messagebox.showerror("Error", "Rows must be between 1 and 20.")
-                continue  # Повторяем запрос, если введены неправильные данные
-            cols = simpledialog.askinteger("Input", "Enter number of columns (1-20):", parent=self.master)
-            if cols is None:  # Пользователь закрыл окно
+            if rows < 3 or rows > 20:
+                messagebox.showerror("Error", "Rows must be between 3 and 20.")
+                continue
+            cols = simpledialog.askinteger("Input", "Enter number of columns (3-20):", parent=self.master)
+            if cols is None:
                 return
-            if cols <= 0 or cols > 20:
-                messagebox.showerror("Error", "Columns must be between 1 and 20.")
-                continue  # Повторяем запрос, если введены неправильные данные
+            if cols < 3 or cols > 20:  # Проверка минимального и максимального значения
+                messagebox.showerror("Error", "Columns must be between 3 and 20.")
+                continue
             self.grid_rows = rows
             self.grid_cols = cols
             self.create_grid()
-            break  # Если ввод корректен, выходим из цикла
+            break
 
     def generate_random_grid(self):
         """
         Генерирует случайную сетку с заданными параметрами и случайными дырками (отверстиями).
         """
         while True:
-            rows = simpledialog.askinteger("Input", "Enter number of rows (1-20):", parent=self.master)
+            rows = simpledialog.askinteger("Input", "Enter number of rows (3-20):", parent=self.master)
             if rows is None:  # Пользователь закрыл окно
                 return
-            if rows <= 0 or rows > 20:
-                messagebox.showerror("Error", "Rows must be between 1 and 20.")
+            if rows < 3 or rows > 20:  # Проверка минимального и максимального значения
+                messagebox.showerror("Error", "Rows must be between 3 and 20.")
                 continue
-            cols = simpledialog.askinteger("Input", "Enter number of columns (1-20):", parent=self.master)
+            cols = simpledialog.askinteger("Input", "Enter number of columns (3-20):", parent=self.master)
             if cols is None:  # Пользователь закрыл окно
                 return
-            if cols <= 0 or cols > 20:
-                messagebox.showerror("Error", "Columns must be between 1 and 20.")
+            if cols < 3 or cols > 20:  # Проверка минимального и максимального значения
+                messagebox.showerror("Error", "Columns must be between 3 and 20.")
                 continue
             self.grid_rows = rows
             self.grid_cols = cols
@@ -233,16 +253,54 @@ class GridCipherApp:
         # Создаем решетку с случайными дырками
         self.holes = []
         total_cells = self.grid_rows * self.grid_cols
-        num_holes = random.randint(3, total_cells // 4)  # Количество дырок от 3 до четверти всех ячеек
-        for _ in range(num_holes):
+        num_holes = max(3, min(total_cells // 4,
+                               total_cells - 1))  # Убедитесь, что минимум 3 дырки, но не больше количества клеток
+
+        while len(self.holes) < num_holes:
             row = random.randint(0, self.grid_rows - 1)
             col = random.randint(0, self.grid_cols - 1)
-            if (row, col) not in self.holes:
+            if (row, col) not in self.holes and not self.check_overlap(row, col):
                 self.holes.append((row, col))
 
         self.holes.sort(key=lambda x: (x[0], x[1]))  # Сортируем дырки построчно, слева направо
-
         self.create_grid()
+
+    def check_overlap(self, row, col):
+        """
+        Проверяет, перекрывается ли дырка после поворота или отражения сетки,
+        а также блокирует создание дырок напротив друг друга как по вертикали, так и по горизонтали.
+
+        Параметры:
+        row (int): Строка ячейки.
+        col (int): Колонка ячейки.
+
+        Возвращает:
+        bool: True, если дырка перекрывается или существует дырка напротив.
+        """
+        # Проверка на существование дырки в центре квадратной решетки
+        if self.grid_rows == self.grid_cols:  # Если решетка квадратная
+            center_row = self.grid_rows // 2
+            center_col = self.grid_cols // 2
+            if (row == center_row) and (col == center_col):
+                messagebox.showerror("Error", "Cannot create a hole in the center of a square grid.")
+                return True  # Вернем True, чтобы обозначить, что создание дырки невозможно
+
+        # Проверка наложения после поворота
+        rotated_hole = (self.grid_rows - 1 - row, self.grid_cols - 1 - col)
+        if rotated_hole in self.holes:
+            return True
+
+        # Проверка на существование дырки напротив по вертикали
+        opposite_hole_vertical = (self.grid_rows - 1 - row, col)
+        if opposite_hole_vertical in self.holes:
+            return True
+
+        # Проверка на существование дырки напротив по горизонтали
+        opposite_hole_horizontal = (row, self.grid_cols - 1 - col)
+        if opposite_hole_horizontal in self.holes:
+            return True
+
+        return False
 
     def create_grid(self):
         """
@@ -274,16 +332,15 @@ class GridCipherApp:
         row (int): Строка ячейки.
         col (int): Колонка ячейки.
         """
+        if self.check_overlap(row, col):
+            return  # Если проверка обнаружила, что создание дырки невозможно, ничего не делаем
+
         cell_id = self.cells[(row, col)]
         current_color = self.canvas.itemcget(cell_id, "fill")
         new_color = "black" if current_color == "white" else "white"
         self.canvas.itemconfig(cell_id, fill=new_color)
 
         if new_color == "black":
-            if self.check_overlap(row, col):
-                self.canvas.itemconfig(cell_id, fill="white")  # Возвращаем цвет в белый
-                messagebox.showerror("Error", "This hole overlaps with another after rotation!")
-                return
             self.holes.append((row, col))
             self.holes.sort(key=lambda x: (x[0], x[1]))
         else:
@@ -299,27 +356,13 @@ class GridCipherApp:
         self.holes.clear()  # Clear the holes list
         print("Cleared holes:", self.holes)  # For debugging
 
-    def check_overlap(self, row, col):
-        """
-        Проверяет, перекрывается ли дырка после поворота сетки.
-
-        Параметры:
-        row (int): Строка ячейки.
-        col (int): Колонка ячейки.
-
-        Возвращает:
-        bool: True, если дырка перекрывается.
-        """
-        rotated_hole = (self.grid_rows - 1 - row, self.grid_cols - 1 - col)
-        if rotated_hole in self.holes:
-            return True
-        return False
 
     def encrypt_text(self):
         """
         Шифрует текст, вводимый пользователем, используя выбранный алфавит и текущую решетку.
         """
         text = self.input_text.get("1.0", tk.END).strip()
+        self.textcopy = text
         if not text:
             messagebox.showerror("Error", "No encrypted text to decrypt!")
             return
@@ -327,6 +370,9 @@ class GridCipherApp:
         # Выбор алфавита для шифрования
         self.alphabet_manager.choose_alphabet(self.master, text)
         alphabet = self.alphabet_manager.get_alphabet()
+        if not self.holes:
+            messagebox.showerror("Error", "Grid is empty! No holes to use for decryption.")
+            return
 
         self.max_length = len(self.holes) * 4  # для 4-х поворотов
 
@@ -369,14 +415,18 @@ class GridCipherApp:
         """
         grid = [[None for _ in range(self.grid_cols)] for _ in range(self.grid_rows)]
         index = 0
+        self.encrypted_coordinates = []  # Список для хранения координат и символов
 
+        # Заполнение символов по исходным дыркам
         for hole in self.holes:
             if index < len(substring):
                 row, col = hole
                 if grid[row][col] is None:
                     grid[row][col] = substring[index]
+                    self.encrypted_coordinates.append((row, col, substring[index]))  # Добавляем координаты и символ
                     index += 1
 
+        # Повороты и заполнение
         for step in range(2):
             self.rotate_grid()
             for hole in self.holes:
@@ -384,8 +434,10 @@ class GridCipherApp:
                     row, col = hole
                     if grid[row][col] is None:
                         grid[row][col] = substring[index]
+                        self.encrypted_coordinates.append((row, col, substring[index]))  # Добавляем координаты и символ
                         index += 1
 
+        # Отражение и заполнение
         for step in range(2):
             self.reflect_grid_on_x()
             for hole in self.holes:
@@ -393,8 +445,10 @@ class GridCipherApp:
                     row, col = hole
                     if grid[row][col] is None:
                         grid[row][col] = substring[index]
+                        self.encrypted_coordinates.append((row, col, substring[index]))  # Добавляем координаты и символ
                         index += 1
 
+        # Еще один поворот после отражения
         for step in range(2):
             self.rotate_reflected_grid()
             for hole in self.holes:
@@ -402,17 +456,99 @@ class GridCipherApp:
                     row, col = hole
                     if grid[row][col] is None:
                         grid[row][col] = substring[index]
+                        self.encrypted_coordinates.append((row, col, substring[index]))  # Добавляем координаты и символ
                         index += 1
 
+        # Заполнение оставшихся пустых клеток случайными символами
         for row in range(self.grid_rows):
             for col in range(self.grid_cols):
                 if grid[row][col] is None:
-                    grid[row][col] = random.choice(alphabet)
+                    random_char = random.choice(alphabet)
+                    grid[row][col] = random_char
+                    self.encrypted_coordinates.append(
+                        (row, col, random_char))  # Добавляем случайные символы в координаты
 
+        # Формируем зашифрованный текст из решетки
         encrypted_text = ''.join([grid[row][col] for row in range(self.grid_rows)
                                   for col in range(self.grid_cols) if grid[row][col] is not None])
 
         return grid, encrypted_text
+
+    def decrypt_text(self):
+        """
+        Расшифровывает зашифрованный текст, используя текущие решетки и алфавит.
+        """
+        encrypted_text = self.output_text.get("1.0", tk.END).strip()
+        if not encrypted_text:
+            messagebox.showerror("Error", "No encrypted text to decrypt!")
+            return
+
+        # Разделяем зашифрованный текст по длине одной решетки
+        max_length = len(self.holes) * 4
+        encrypted_substrings = [encrypted_text[i:i + max_length] for i in range(0, len(encrypted_text), max_length)]
+
+        decrypted_text = ''
+
+        # Расшифровываем каждую часть текста по решеткам
+        for substring in encrypted_substrings:
+            decrypted_text += self.decrypt_substring(substring)
+
+        # Выводим расшифрованный текст
+        self.decrypted_text.delete("1.0", tk.END)
+        self.decrypted_text.insert("1.0", decrypted_text)
+
+    def decrypt_substring(self, substring):
+        """
+        Расшифровывает текст и возвращает расшифрованный текст.
+
+        Параметры:
+        encrypted_text (str): Зашифрованный текст.
+
+        Возвращает:
+        str: Расшифрованный текст.
+        """
+        grid = [['' for _ in range(self.grid_cols)] for _ in range(self.grid_rows)]
+        index = 0
+
+        # Создаем словарь для шифрованных символов
+        encrypted_dict = {(row, col): symbol for row, col, symbol in self.encrypted_coordinates}
+        print("Исходные дырки:", self.holes)
+        print("Зашифрованные координаты:", self.encrypted_coordinates)
+        print("Словарь зашифрованных символов:", encrypted_dict)
+
+        decrypted_text = []
+
+        # Восстанавливаем символы из исходных дырок
+        for _ in range(2):  # Четыре вращения решетки
+            for hole in self.holes:
+                row, col = hole
+                if (row, col) in encrypted_dict:
+                    grid[row][col] = encrypted_dict[(row, col)]
+                    print(grid[row][col])
+                    decrypted_text.append(grid[row][col])
+
+            # Поворот сетки на 90 градусов
+            self.rotate_grid()
+            print("Повернул решетку, новые дырки:", self.holes)
+
+        # Отражаем сетку и делаем еще 4 вращения для полной расшифровки
+        self.reflect_grid_on_x()
+        print("Отразил решетку:", self.holes)
+
+        for _ in range(2):  # Еще четыре вращения после отражения
+            for hole in self.holes:
+                row, col = hole
+                if (row, col) in encrypted_dict:
+                    grid[row][col] = encrypted_dict[(row, col)]
+                    decrypted_text.append(grid[row][col])
+
+            # Поворот сетки на 90 градусов после отражения
+            self.rotate_grid()
+            print("Повернул решетку после отражения, новые дырки:", self.holes)
+
+        # Соединяем все символы в строку
+        return ''.join(decrypted_text)[:len(self.textcopy)]
+
 
     def visualize_encrypted_grid(self, grid):
         """
@@ -454,9 +590,10 @@ class GridCipherApp:
 
     def rotate_reflected_grid(self):
         """
-        Отражает сетку относительно оси X и обновляет дырки.
+        Поворот после отражения
         """
         new_holes = []
+        print("дырки после отражения", self.holes)
         for row, col in self.holes:
             new_row = row
             new_col = self.grid_cols - 1 - col
